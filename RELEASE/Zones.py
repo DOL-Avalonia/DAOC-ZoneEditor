@@ -5,7 +5,7 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QPushButton, QWidget, QApplication, QWidget, QPushButton, 
                              QVBoxLayout, QHBoxLayout, QLineEdit, QLineEdit, QWidget, QDesktopWidget,
-                             QLabel, QListWidget, QListWidgetItem)
+                             QLabel, QListWidget, QListWidgetItem, QMessageBox)
 
 from functools import partial
 
@@ -36,61 +36,35 @@ class App(QWidget):
         settingsLayout = QHBoxLayout()
 
         #describtion text
-        layout.addWidget(Describtion("Zone edit", self))
+        layout.addWidget(Describtion("Map loading", self))
 
         # variables
 
         self.label = QLabel(self)
         self.label.setText("Client: ")
         settingsLayout.addWidget(self.label)
-        self.EditInputC = QLineEdit(self)
-        settingsLayout.addWidget(self.EditInputC)
+        self.InputC = QLineEdit(self)
+        settingsLayout.addWidget(self.InputC)
 
         self.label = QLabel(self)
         self.label.setText("Zone ID: ")
         settingsLayout.addWidget(self.label)
-        self.EditInputZ = QLineEdit(self)
-        settingsLayout.addWidget(self.EditInputZ)
+        self.InputZ = QLineEdit(self)
+        settingsLayout.addWidget(self.InputZ)
 
         layout.addLayout(settingsLayout)
 
         # launch button
-        self.buttonEdit = QPushButton('Launch', self)
+        self.buttonEdit = QPushButton('Zone edit', self)
         self.buttonEdit.setStyleSheet("background-color: #3d3d3d; color: #ffffff;font-size: 20px;")
         self.buttonEdit.setMinimumHeight(40)
         layout.addWidget(self.buttonEdit)
         self.buttonEdit.clicked.connect(self.onZoneEdit)
 
         # Extract list
-        extractLayout = QHBoxLayout()
-
-        #describtion text
-        layout.addWidget(Describtion("Zone extract", self))
-
-        #variables
-
-        self.label = QLabel(self)
-        self.label.setText("Client: ")
-        extractLayout.addWidget(self.label)
-        self.ExtractInputC = QLineEdit(self)
-        extractLayout.addWidget(self.ExtractInputC)
-
-        self.label = QLabel(self)
-        self.label.setText("Zone ID: ")
-        extractLayout.addWidget(self.label)
-        self.ExtractInputZ = QLineEdit(self)
-        extractLayout.addWidget(self.ExtractInputZ)
-
-        self.label = QLabel(self)
-        self.label.setText("Target Dir: ")
-        extractLayout.addWidget(self.label)
-        self.ExtractInputT = QLineEdit(self)
-        extractLayout.addWidget(self.ExtractInputT)
-
-        layout.addLayout(extractLayout)
 
         # launch button
-        self.buttonExtract = QPushButton('Launch', self)
+        self.buttonExtract = QPushButton('Zone extract', self)
         self.buttonExtract.setStyleSheet("background-color: #3d3d3d; color: #ffffff;font-size: 20px;")
         self.buttonExtract.setMinimumHeight(40)
         layout.addWidget(self.buttonExtract)
@@ -155,53 +129,44 @@ class App(QWidget):
         for i in range(1, len(line)-1):
             path += line[i].replace(", ", "/")
         return path
+
     def loadSettings(self):
         with open("settings.cmd", "r") as f:
             for line in f:
                 if "set CLIENT=" in line:
-                    self.EditInputC.setText(line.split("=")[1])
-                    self.ExtractInputC.setText(line.split("=")[1])
+                    self.InputC.setText(line.split("=")[1])
+                    self.InputC.setText(line.split("=")[1])
                 if "set ZONE_ID=" in line:
-                    self.EditInputZ.setText(line.split("=")[1])
-                    self.ExtractInputZ.setText(line.split("=")[1])
-                if "set TARGET_DIR=" in line:
-                    self.ExtractInputT.setText(line.split("=")[1])
-    @pyqtSlot()
-    def onZoneEdit(self):
+                    self.InputZ.setText(line.split("=")[1])
+                    self.InputZ.setText(line.split("=")[1])
+
+    def setSettings(self):
         #load all previous lines from settings
         with open("settings.cmd", "r") as f:
             lines = f.readlines()
-
         #edit set variables in settings.cmd
         with open("settings.cmd", "w") as f:
             f.write("@echo off\n")
-            f.write("set CLIENT=" + self.EditInputC.text() + "\n")
-            f.write("set ZONE_ID=" + self.EditInputZ.text() + "\n")
+            f.write("set CLIENT=" + self.InputC.text() + "\n")
+            f.write("set ZONE_ID=" + self.InputZ.text() + "\n")
             #add lines that are not already in settings
             for line in lines:
                 if "echo off" not in line and "set CLIENT=" not in line and "set ZONE_ID=" not in line:
                     f.write(line)
         #run start_zoeedit.bat
-        os.system("start_zoneedit.bat")
-        self.loadSettings()
-    @pyqtSlot()
-    def onExtractZone(self):
-        #load all previous lines from settings
-        with open("settings.cmd", "r") as f:
-            lines = f.readlines()
-        #edit set variables in settings.cmd
-        with open("settings.cmd", "w") as f:
-            f.write("@echo off\n")
-            f.write("set CLIENT=" + self.ExtractInputC.text() + "\n")
-            f.write("set ZONE_ID=" + self.ExtractInputZ.text() + "\n")
-            f.write("set TARGET_DIR=" + self.ExtractInputT.text() + "\n")
-            #add lines that are not already in settings
-            for line in lines:
-                if "echo off" not in line and "set CLIENT=" not in line and "set ZONE_ID=" not in line and "set TARGET_DIR=" not in line:
-                    f.write(line)
-        #run start_zoeedit.bat
         os.system("extract_zone.bat")
         self.loadSettings()
+
+    @pyqtSlot()
+    def onZoneEdit(self):
+        self.setSettings()
+        os.system("start_zoneedit.bat")
+
+    @pyqtSlot()
+    def onExtractZone(self):
+        self.setSettings()
+        os.system("extract_zone.bat")
+
     @pyqtSlot()
     def onSave(self):
         with open("../HMapEdit/Tools/GameData.cs", "r") as f:
